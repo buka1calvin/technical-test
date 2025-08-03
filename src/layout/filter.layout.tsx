@@ -46,7 +46,7 @@ export default function FilterDropdown({
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'h-9 border-dashed justify-start min-w-[120px]',
+          'h-9 border-dashed justify-start min-w-[100px]',
           selectedValues.length > 0 && 'border-primary text-primary'
         )}
       >

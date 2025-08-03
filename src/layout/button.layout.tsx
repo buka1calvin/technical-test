@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ButtonProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
@@ -41,19 +41,17 @@ export default function Button({
   };
 
   const sizeClasses = {
-    sm: 'h-8 px-3 text-sm ',
-    md: 'h-10 px-4 text-base ',
-    lg: 'h-12 px-6 text-lg '
+    sm: 'h-8 px-3 text-sm rounded-md',
+    md: 'h-10 px-4 text-base rounded-lg',
+    lg: 'h-12 px-6 text-lg rounded-lg'
   };
 
   const buttonClasses = cn(
     'inline-flex items-center justify-center gap-2 font-medium',
     'focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
-
+    'transition-all duration-200',
     variantClasses[variant],
-
     sizeClasses[size],
-
     fullWidth && 'w-full',
     loading && 'cursor-wait',
     className
@@ -77,7 +75,7 @@ export default function Button({
       return (
         <>
           <LoadingSpinner />
-          <span>Loading...</span>
+          {children && <span>Loading...</span>}
         </>
       );
     }

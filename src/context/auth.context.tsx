@@ -28,14 +28,13 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     checkUser();
   }, []);
-  
+
   const checkUser = async () => {
-    setIsLoading(true);
     try {
       const res = await authService.getUser();
       if (res.success) {
@@ -43,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.log("failed to fetch user!!", error);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     }
   };
-
+  
   const value = {
     isLoading,
     login,
@@ -76,5 +76,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
     isAuthenticated: !!user,
   };
+  
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
