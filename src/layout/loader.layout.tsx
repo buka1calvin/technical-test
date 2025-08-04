@@ -21,7 +21,7 @@ export default function Loading({
     lg: { spinner: 32, dots: 16, pulse: 12 }
   };
 
-  const primaryColor = 'hsl(295 26% 51%)'; // Your purple theme
+  const primaryColor = 'hsl(295 26% 51%)'; 
 
   const renderLoader = () => {
     const loaderSize = sizeMap[size][variant];
@@ -48,7 +48,6 @@ export default function Loading({
   );
 }
 
-// Specialized loading components for common use cases
 Loading.Page = function PageLoading({ 
   message = "Loading..." 
 }: { 

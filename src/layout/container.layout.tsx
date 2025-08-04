@@ -226,3 +226,78 @@ Container.ProductStats = function ProductStatsContainer({
     </div>
   );
 };
+
+Container.ProductCard = function ProductCardContainer({
+  children,
+  className,
+  onKeyDown
+}: {
+  children: React.ReactNode;
+  className?: string;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+}) {
+  return (
+    <div
+      className={cn('group', className)}
+      onKeyDown={onKeyDown}
+    >
+      {children}
+    </div>
+  );
+};
+
+Container.ActionGroup = function ActionGroupContainer({
+  children,
+  className
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex gap-2 mt-3', className)}>
+      {children}
+    </div>
+  );
+};
+
+Container.EditField = function EditFieldContainer({
+  children,
+  className
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex-1 mr-4', className)}>
+      {children}
+    </div>
+  );
+};
+
+Container.AmountField = function AmountFieldContainer({
+  children,
+  className
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('w-32', className)}>
+      {children}
+    </div>
+  );
+};
+
+Container.LoadingCenter = function LoadingCenterContainer({
+  children,
+  className
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex justify-center py-4', className)}>
+      {children}
+    </div>
+  );
+};

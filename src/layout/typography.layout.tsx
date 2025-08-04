@@ -44,7 +44,7 @@ Typography.Body = function Body({ children, className }: TypographyProps) {
 
 Typography.BodySecondary = function BodySecondary({ children, className }: TypographyProps) {
   return (
-    <p className={cn('text-body-sec', className)}>
+    <p className={cn('text-body-secondary', className)}>
       {children}
     </p>
   );
@@ -77,7 +77,7 @@ Typography.Amount = function Amount({ children, className }: TypographyProps) {
 Typography.Meta = function Meta({ 
   children, 
   className,
-  icon: Icon
+  icon: Icon 
 }: TypographyProps & { icon?: React.ComponentType<any> }) {
   return (
     <div className={cn('product-meta', className)}>

@@ -127,9 +127,25 @@ export const useProductActions = () => {
     }
   }, []);
 
+    const reorderProducts = useCallback(async (productIds: string[]) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await productService.reorderProducts(productIds);
+      return response.products;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     createProduct,
     updateProduct,
+    reorderProducts,
     deleteProduct,
     loading,
     error

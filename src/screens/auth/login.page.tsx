@@ -4,6 +4,7 @@ import Card from "@/src/layout/card.layout";
 import Container from "@/src/layout/container.layout";
 import Input from "@/src/layout/input.layout";
 import MarketingSection from "@/src/layout/section-marketing.layout";
+import Typography from "@/src/layout/typography.layout";
 import { useRouter } from "next/router";
 import { useState } from "react";
 
@@ -43,14 +44,14 @@ export default function LoginPage() {
 
   return (
     <Container.Split
-    left={<MarketingSection/>}
-    right={
+      left={<MarketingSection />}
+      right={
         <Card variant="elevated" padding="lg" rounded="xl">
           <form onSubmit={handleSubmit}>
             <Card.Header>
               <Card.Title>Welcome Back</Card.Title>
             </Card.Header>
-            
+
             <Card.Content>
               <Input
                 type="email"
@@ -60,8 +61,8 @@ export default function LoginPage() {
                 error={error}
                 disabled={isLoading}
               />
-              
-              <p>We'll create an account for you if this is your first time.</p>
+
+              <Typography.Body>We'll create an account for you if this is your first time.</Typography.Body>
             </Card.Content>
 
             <Card.Footer>
@@ -78,7 +79,7 @@ export default function LoginPage() {
             </Card.Footer>
           </form>
         </Card>
-    }
+      }
     />
-  )
+  );
 }

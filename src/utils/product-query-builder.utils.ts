@@ -113,7 +113,6 @@ export class ProductQueryBuilder {
   }
 }
 
-// Helper function to create query builder
 export const createProductQuery = (userId: string) => {
   return new ProductQueryBuilder(userId);
 };

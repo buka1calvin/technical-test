@@ -245,7 +245,7 @@ body {
     @apply flex flex-col items-center justify-center;
     @apply min-h-[400px] p-12 text-center;
     @apply bg-gradient-to-br from-orange-50/60 to-orange-100/40;
-    @apply rounded-2xl border-2 border-dashed border-orange-200;
+    @apply border-2 border-dashed border-orange-200;
   }
   
   .empty-state-icon {

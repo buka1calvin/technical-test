@@ -37,6 +37,7 @@ export default function FilterDropdown({
 
   const handleClear = () => {
     onValueChange([]);
+    setIsOpen(false);
   };
 
   return (
@@ -47,7 +48,7 @@ export default function FilterDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'h-9 border-dashed justify-start min-w-[100px]',
-          selectedValues.length > 0 && 'border-primary text-primary'
+          selectedValues.length > 0 && 'border-primary/50 text-primary bg-primary/10 hover:bg-primary/20'
         )}
       >
         <Icon className="mr-2 h-4 w-4" />
@@ -62,19 +63,17 @@ export default function FilterDropdown({
 
       {isOpen && (
         <>
-          {/* Backdrop */}
           <div 
-            className="fixed inset-0 z-10" 
+            className="fixed inset-0"
             onClick={() => setIsOpen(false)}
           />
-          
-          {/* Dropdown */}
-          <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-md shadow-lg z-20">
+                    
+          <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-md shadow-lg z-50">
             <div className="p-2 max-h-64 overflow-y-auto">
               {options.map((option) => {
                 const isSelected = selectedValues.includes(option.value);
                 const OptionIcon = option.icon;
-                
+                                
                 return (
                   <div
                     key={option.value}
@@ -94,7 +93,7 @@ export default function FilterDropdown({
                   </div>
                 );
               })}
-              
+                            
               {selectedValues.length > 0 && (
                 <div className="border-t border-border mt-2 pt-2">
                   <button

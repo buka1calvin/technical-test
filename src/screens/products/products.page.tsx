@@ -1,6 +1,27 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useDebounce } from "use-debounce";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  restrictToWindowEdges,
+} from '@dnd-kit/modifiers';
+
+import {
   Plus,
   Package,
   Calendar,
@@ -11,6 +32,7 @@ import {
   Trash2,
   Save,
   X,
+  Move,
 } from "lucide-react";
 import Container from "@/src/layout/container.layout";
 import Toolbar from "@/src/layout/toolbar.layout";
@@ -22,61 +44,50 @@ import Loading from "@/src/layout/loader.layout";
 import Typography from "@/src/layout/typography.layout";
 import EmptyState from "@/src/layout/empty-state.layout";
 import ProductCreationModal from "@/src/layout/product-modal.layout";
+import DragHint from "@/src/layout/drag-hint.layout";
 import { useProducts, useProductActions } from "@/src/hooks/products.hook";
 import { useProductModal } from "@/src/hooks/product-modal.hook";
 import { Product } from "@/src/types/types";
+import { formatDate } from "@/src/utils/formatDate";
+import { amountRangeOptions, dateRangeOptions, sortOptions } from "@/constants";
+import { formatAmount } from "@/src/utils/moneyFormatter";
 
 const ITEMS_PER_PAGE = 10;
 
-const sortOptions = [
-  { label: "Newest First", value: "createdAt_desc", icon: Calendar },
-  { label: "Oldest First", value: "createdAt_asc", icon: Calendar },
-  { label: "Name A-Z", value: "name_asc", icon: Package },
-  { label: "Name Z-A", value: "name_desc", icon: Package },
-  { label: "Amount High-Low", value: "amount_desc", icon: Hash },
-  { label: "Amount Low-High", value: "amount_asc", icon: Hash },
-  { label: "Position", value: "position_asc", icon: Hash },
-];
-
-const amountRangeOptions = [
-  { label: "Under 100", value: "0-99" },
-  { label: "100-500", value: "100-500" },
-  { label: "500-1000", value: "500-1000" },
-  { label: "Over 1000", value: "1000+" },
-];
-
-const dateRangeOptions = [
-  { label: "Today", value: "today", icon: Calendar },
-  { label: "This Week", value: "week", icon: Calendar },
-  { label: "This Month", value: "month", icon: Calendar },
-  { label: "This Year", value: "year", icon: Calendar },
-];
-
 export default function ProductsPage() {
   const [searchInput, setSearchInput] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt_desc");
+  const [sortBy, setSortBy] = useState("position_asc");
   const [amountFilters, setAmountFilters] = useState<string[]>([]);
   const [dateFilters, setDateFilters] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [deletingProductId, setDeletingProductId] = useState<string | null>(
-    null
-  );
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [editData, setEditData] = useState<{ [key: string]: any }>({});
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
 
   const [debouncedSearch] = useDebounce(searchInput, 500);
   const isTypingRef = useRef(false);
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
-  const { isCreateModalOpen, openCreateModal, closeCreateModal } =
-    useProductModal();
+  const { isCreateModalOpen, openCreateModal, closeCreateModal } = useProductModal();
   const {
     updateProduct,
     deleteProduct,
+    reorderProducts,
     loading: actionLoading,
   } = useProductActions();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const queryParams = useMemo(() => {
     const params: any = {
@@ -98,8 +109,11 @@ export default function ProductsPage() {
     return params;
   }, [debouncedSearch, sortBy, amountFilters, dateFilters, currentPage]);
 
-  const { products, loading, error, pagination, fetchProducts, refresh } =
-    useProducts(queryParams);
+  const { products, loading, error, pagination, fetchProducts, refresh } = useProducts(queryParams);
+
+  useEffect(() => {
+    setLocalProducts(products);
+  }, [products]);
 
   const handleSearchChange = useCallback((value: string) => {
     isTypingRef.current = true;
@@ -115,12 +129,6 @@ export default function ProductsPage() {
     }
   }, [debouncedSearch, sortBy, amountFilters, dateFilters]);
 
-  useEffect(() => {
-    if (editingProductId && nameInputRef.current) {
-      nameInputRef.current.focus();
-    }
-  }, [editingProductId]);
-
   const handleLoadMore = () => {
     if (pagination?.hasNextPage) {
       setCurrentPage((prev) => prev + 1);
@@ -134,16 +142,40 @@ export default function ProductsPage() {
     [fetchProducts]
   );
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const activeProductItem = localProducts.find(p => p._id === active.id);
+    
+    if (activeProductItem) {
+      setActiveProduct(activeProductItem);
+    }
   };
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat("en-US").format(amount);
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    setActiveProduct(null);
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = localProducts.findIndex(p => p._id === active.id);
+    const newIndex = localProducts.findIndex(p => p._id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newProducts = arrayMove(localProducts, oldIndex, newIndex);
+      setLocalProducts(newProducts);
+
+      try {
+        const productIds = newProducts.map(product => product._id);
+        await reorderProducts(productIds);
+        refresh();
+      } catch (error) {
+        console.error("Failed to reorder products:", error);
+        setLocalProducts(localProducts);
+      }
+    }
   };
 
   const handleEdit = (product: Product) => {
@@ -200,7 +232,7 @@ export default function ProductsPage() {
         comment: data.comment.trim(),
       };
 
-      const updatedProduct = await updateProduct(productId, updateData);
+      await updateProduct(productId, updateData);
       refresh();
       setEditingProductId(null);
       setEditData({});
@@ -227,11 +259,7 @@ export default function ProductsPage() {
       } else if (editingProductId === productId) {
         handleCancelEdit();
       }
-    } else if (
-      e.key === "Enter" &&
-      e.ctrlKey &&
-      editingProductId === productId
-    ) {
+    } else if (e.key === "Enter" && e.ctrlKey && editingProductId === productId) {
       handleSave(productId);
     }
   };
@@ -246,10 +274,179 @@ export default function ProductsPage() {
     }));
   };
 
-  const hasActiveFilters =
-    debouncedSearch || amountFilters.length > 0 || dateFilters.length > 0;
-  const showFullPageLoading =
-    loading && currentPage === 1 && !debouncedSearch && products.length === 0;
+  const isDragEnabled = useMemo(() => {
+    return (
+      !debouncedSearch &&
+      amountFilters.length === 0 &&
+      dateFilters.length === 0 &&
+      (sortBy === "position_asc" || sortBy === "createdAt_desc") &&
+      currentPage === 1 &&
+      !editingProductId &&
+      !deletingProductId
+    );
+  }, [debouncedSearch, amountFilters, dateFilters, sortBy, currentPage, editingProductId, deletingProductId]);
+
+  const renderProductCard = (product: Product, isDragOverlay = false) => {
+    const isEditing = editingProductId === product._id;
+    const isDeleting = deletingProductId === product._id;
+    const productEditData = editData[product._id];
+    const productErrors = errors[product._id] || {};
+
+    return (
+      <Container.ProductCard
+        key={product._id}
+        onKeyDown={isDragOverlay ? undefined : (e) => handleKeyDown(e, product._id)}
+      >
+        <Card
+          variant="product"
+          padding="lg"
+          hover={!isEditing && !isDeleting && !isDragOverlay}
+          isEditing={isEditing}
+          isDeleting={isDeleting}
+          isDraggable={isDragEnabled && !isDragOverlay}
+          dragId={product._id}
+        >
+          {!isEditing && !isDeleting && !isDragOverlay && (
+            <Card.Actions>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Edit2 />}
+                onClick={() => handleEdit(product)}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Trash2 />}
+                onClick={() => setDeletingProductId(product._id)}
+              />
+            </Card.Actions>
+          )}
+
+          {isDeleting && !isDragOverlay && (
+            <Card.DeleteOverlay>
+              <Typography.Body>
+                Are you sure you want to delete "{product.name}"?
+              </Typography.Body>
+              <Container.ActionGroup>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  loading={actionLoading}
+                  onClick={() => handleDelete(product._id)}
+                  icon={<Trash2 />}
+                >
+                  Delete
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDeletingProductId(null)}
+                  icon={<X />}
+                >
+                  Cancel
+                </Button>
+              </Container.ActionGroup>
+            </Card.DeleteOverlay>
+          )}
+
+          <Card.Header>
+            {isEditing && !isDragOverlay ? (
+              <Container.EditField>
+                <Input
+                  value={productEditData?.name || ""}
+                  onChange={(value) => updateEditData(product._id, "name", value)}
+                  placeholder="Product name"
+                  error={productErrors.name}
+                />
+              </Container.EditField>
+            ) : (
+              <Card.Title>{product.name}</Card.Title>
+            )}
+
+            {isEditing && !isDragOverlay ? (
+              <Container.AmountField>
+                <Input
+                  value={productEditData?.amount || ""}
+                  onChange={(value) => updateEditData(product._id, "amount", value)}
+                  placeholder="Amount"
+                  type="number"
+                  error={productErrors.amount}
+                />
+              </Container.AmountField>
+            ) : (
+              <Typography.Amount>$ {formatAmount(product.amount)}</Typography.Amount>
+            )}
+          </Card.Header>
+
+          <Card.Content>
+            {(product.comment || isEditing) && (
+              <Card.Comment isEditing={isEditing && !isDragOverlay}>
+                {isEditing && !isDragOverlay ? (
+                  <Textarea
+                    value={productEditData?.comment || ""}
+                    onChange={(value) => updateEditData(product._id, "comment", value)}
+                    placeholder="Add a comment (optional)"
+                    rows={2}
+                    error={productErrors.comment}
+                  />
+                ) : (
+                  <Typography.Meta icon={MessageSquare}>
+                    {product.comment}
+                  </Typography.Meta>
+                )}
+              </Card.Comment>
+            )}
+
+            <Container.ProductMetaGroup>
+              <Typography.Meta icon={Calendar}>
+                Created {formatDate(product.createdAt)}
+              </Typography.Meta>
+
+              {product.position !== undefined && (
+                <Typography.Meta icon={Hash}>
+                  Position {product.position}
+                </Typography.Meta>
+              )}
+            </Container.ProductMetaGroup>
+          </Card.Content>
+
+          {isEditing && !isDragOverlay && (
+            <>
+              <Card.Footer>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  icon={<X />}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={actionLoading}
+                  onClick={() => handleSave(product._id)}
+                  icon={<Save />}
+                >
+                  Save
+                </Button>
+              </Card.Footer>
+
+              <Card.EditHint>
+                <Typography.Caption>
+                  Press Ctrl+Enter to save, Escape to cancel
+                </Typography.Caption>
+              </Card.EditHint>
+            </>
+          )}
+        </Card>
+      </Container.ProductCard>
+    );
+  };
+
+  const hasActiveFilters = debouncedSearch || amountFilters.length > 0 || dateFilters.length > 0;
+  const showFullPageLoading = loading && currentPage === 1 && !debouncedSearch && localProducts.length === 0;
 
   if (showFullPageLoading) {
     return <Loading.Page message="Loading your products..." />;
@@ -301,10 +498,16 @@ export default function ProductsPage() {
           </Toolbar.Right>
         </Toolbar>
 
+        {isDragEnabled && localProducts.length > 1 && (
+          <DragHint icon={Move}>
+            Drag and drop to reorder your products
+          </DragHint>
+        )}
+
         {loading && currentPage === 1 && (
-          <div className="flex justify-center py-4">
+          <Container.LoadingCenter>
             <Loading.Inline message="Searching..." />
-          </div>
+          </Container.LoadingCenter>
         )}
 
         {error && (
@@ -322,7 +525,7 @@ export default function ProductsPage() {
           </Card>
         )}
 
-        {!loading && !error && products.length === 0 && (
+        {!loading && !error && localProducts.length === 0 && (
           <EmptyState
             icon={hasActiveFilters ? Search : Package}
             title={hasActiveFilters ? "No products found" : "No products yet"}
@@ -344,175 +547,28 @@ export default function ProductsPage() {
           />
         )}
 
-        {products.length > 0 && (
+        {localProducts.length > 0 && (
           <>
-            <Container.ProductGrid>
-              {products.map((product: Product) => {
-                const isEditing = editingProductId === product._id;
-                const isDeleting = deletingProductId === product._id;
-                const productEditData = editData[product._id];
-                const productErrors = errors[product._id] || {};
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToWindowEdges]}
+            >
+              <SortableContext
+                items={localProducts.map(p => p._id)}
+                strategy={rectSortingStrategy}
+              >
+                <Container.ProductGrid>
+                  {localProducts.map((product) => renderProductCard(product))}
+                </Container.ProductGrid>
+              </SortableContext>
 
-                return (
-                  <div
-                    key={product._id}
-                    className="group"
-                    onKeyDown={(e) => handleKeyDown(e, product._id)}
-                  >
-                    <Card
-                      variant="product"
-                      padding="lg"
-                      hover={!isEditing && !isDeleting}
-                      isEditing={isEditing}
-                      isDeleting={isDeleting}
-                    >
-                      {!isEditing && !isDeleting && (
-                        <Card.Actions>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<Edit2 />}
-                            onClick={() => handleEdit(product)}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<Trash2 />}
-                            onClick={() => setDeletingProductId(product._id)}
-                          />
-                        </Card.Actions>
-                      )}
-
-                      {isDeleting && (
-                        <Card.DeleteOverlay>
-                          <Typography.Body>
-                            Are you sure you want to delete "{product.name}"?
-                          </Typography.Body>
-                          <div className="flex gap-2 mt-3">
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              loading={actionLoading}
-                              onClick={() => handleDelete(product._id)}
-                              icon={<Trash2 />}
-                            >
-                              Delete
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setDeletingProductId(null)}
-                              icon={<X />}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </Card.DeleteOverlay>
-                      )}
-
-                      <Card.Header>
-                        {isEditing ? (
-                          <div className="flex-1 mr-4">
-                            <Input
-                              value={productEditData?.name || ""}
-                              onChange={(value) =>
-                                updateEditData(product._id, "name", value)
-                              }
-                              placeholder="Product name"
-                              error={productErrors.name}
-                            />
-                          </div>
-                        ) : (
-                          <Card.Title>{product.name}</Card.Title>
-                        )}
-
-                        {isEditing ? (
-                          <div className="w-32">
-                            <Input
-                              value={productEditData?.amount || ""}
-                              onChange={(value) =>
-                                updateEditData(product._id, "amount", value)
-                              }
-                              placeholder="Amount"
-                              type="number"
-                              error={productErrors.amount}
-                            />
-                          </div>
-                        ) : (
-                          <Typography.Amount>
-                            $ {formatAmount(product.amount)}
-                          </Typography.Amount>
-                        )}
-                      </Card.Header>
-
-                      <Card.Content>
-                        {(product.comment || isEditing) && (
-                          <Card.Comment isEditing={isEditing}>
-                            {isEditing ? (
-                              <Textarea
-                                value={productEditData?.comment || ""}
-                                onChange={(value) =>
-                                  updateEditData(product._id, "comment", value)
-                                }
-                                placeholder="Add a comment (optional)"
-                                rows={2}
-                                error={productErrors.comment}
-                              />
-                            ) : (
-                              <Typography.Meta icon={MessageSquare}>
-                                {product.comment}
-                              </Typography.Meta>
-                            )}
-                          </Card.Comment>
-                        )}
-
-                        <Container.ProductMetaGroup>
-                          <Typography.Meta icon={Calendar}>
-                            Created {formatDate(product.createdAt)}
-                          </Typography.Meta>
-
-                          {product.position !== undefined && (
-                            <Typography.Meta icon={Hash}>
-                              Position {product.position}
-                            </Typography.Meta>
-                          )}
-                        </Container.ProductMetaGroup>
-                      </Card.Content>
-
-                      {isEditing && (
-                        <>
-                          <Card.Footer>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleCancelEdit}
-                              icon={<X />}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              loading={actionLoading}
-                              onClick={() => handleSave(product._id)}
-                              icon={<Save />}
-                            >
-                              Save
-                            </Button>
-                          </Card.Footer>
-
-                          <Card.EditHint>
-                            <Typography.Caption>
-                              Press Ctrl+Enter to save, Escape to cancel
-                            </Typography.Caption>
-                          </Card.EditHint>
-                        </>
-                      )}
-                    </Card>
-                  </div>
-                );
-              })}
-            </Container.ProductGrid>
+              <DragOverlay>
+                {activeProduct ? renderProductCard(activeProduct, true) : null}
+              </DragOverlay>
+            </DndContext>
 
             <Container.ProductActions>
               {pagination?.hasNextPage && (
@@ -526,9 +582,7 @@ export default function ProductsPage() {
                   >
                     {loading
                       ? "Loading..."
-                      : `Load More (${
-                          pagination.totalCount - products.length
-                        } remaining)`}
+                      : `Load More (${pagination.totalCount - localProducts.length} remaining)`}
                   </Button>
                 </Container.ProductLoadMore>
               )}
@@ -536,8 +590,7 @@ export default function ProductsPage() {
               {pagination && (
                 <Container.ProductStats>
                   <Typography.Caption>
-                    Showing {products.length} of {pagination.totalCount}{" "}
-                    products
+                    Showing {localProducts.length} of {pagination.totalCount} products
                     {loading && currentPage === 1 && " (searching...)"}
                   </Typography.Caption>
                 </Container.ProductStats>

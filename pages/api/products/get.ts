@@ -4,6 +4,73 @@ import { verifyToken } from "@/src/utils/auth.utils";
 import { NextApiRequest, NextApiResponse } from "next";
 import { createProductQuery } from "@/src/utils/product-query-builder.utils";
 
+function parseAmountFilters(amountFilter: string) {
+  const ranges = amountFilter.split(',');
+  let minAmount: number | undefined;
+  let maxAmount: number | undefined;
+  
+  for (const range of ranges) {
+    if (range === '1000+') {
+      minAmount = minAmount ? Math.min(minAmount, 1000) : 1000;
+    } else {
+      const [min, max] = range.split('-').map(Number);
+      if (!isNaN(min)) {
+        minAmount = minAmount ? Math.min(minAmount, min) : min;
+      }
+      if (!isNaN(max)) {
+        maxAmount = maxAmount ? Math.max(maxAmount, max) : max;
+      }
+    }
+  }
+  
+  return { minAmount, maxAmount };
+}
+
+function parseDateFilters(dateFilter: string) {
+  const filters = dateFilter.split(',');
+  let startDate: Date | undefined;
+  let endDate: Date | undefined;
+  
+  const now = new Date();
+  
+  for (const filter of filters) {
+    let filterStart: Date;
+    let filterEnd: Date;
+    
+    switch (filter) {
+      case 'today':
+        filterStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        filterEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        break;
+      case 'week':
+        const dayOfWeek = now.getDay();
+        const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        filterStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday);
+        filterEnd = new Date(filterStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        filterStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        filterEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        break;
+      case 'year':
+        filterStart = new Date(now.getFullYear(), 0, 1);
+        filterEnd = new Date(now.getFullYear() + 1, 0, 1);
+        break;
+      default:
+        continue;
+    }
+    
+    if (!startDate || filterStart < startDate) {
+      startDate = filterStart;
+    }
+    if (!endDate || filterEnd > endDate) {
+      endDate = filterEnd;
+    }
+  }
+  
+  return { startDate, endDate };
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -28,8 +95,8 @@ export default async function handler(
     const userId = decoded.data.id;
     const {
       search,
-      minAmount,
-      maxAmount,
+      amountFilter,
+      dateFilter,
       sortBy = 'position',
       sortOrder = 'asc',
       page = '1',
@@ -42,11 +109,18 @@ export default async function handler(
       queryBuilder = queryBuilder.search(search);
     }
 
-    if (minAmount || maxAmount) {
-      queryBuilder = queryBuilder.amountRange(
-        minAmount ? Number(minAmount) : undefined,
-        maxAmount ? Number(maxAmount) : undefined
-      );
+    if (amountFilter && typeof amountFilter === 'string') {
+      const { minAmount, maxAmount } = parseAmountFilters(amountFilter);
+      if (minAmount !== undefined || maxAmount !== undefined) {
+        queryBuilder = queryBuilder.amountRange(minAmount, maxAmount);
+      }
+    }
+
+    if (dateFilter && typeof dateFilter === 'string') {
+      const { startDate, endDate } = parseDateFilters(dateFilter);
+      if (startDate || endDate) {
+        queryBuilder = queryBuilder.dateRange(startDate, endDate);
+      }
     }
 
     if (sortBy === 'position') {
@@ -86,8 +160,8 @@ export default async function handler(
 
   } catch (error) {
     console.error("Get products error:", error);
-    return res.status(500).json({ 
-      message: "Internal server error",
+    return res.status(500).json({
+       message: "Internal server error",
       error
     });
   }
