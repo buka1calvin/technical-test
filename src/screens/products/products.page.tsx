@@ -33,6 +33,7 @@ import {
   Save,
   X,
   Move,
+  ChevronLeft,
 } from "lucide-react";
 import Container from "@/src/layout/container.layout";
 import Toolbar from "@/src/layout/toolbar.layout";
@@ -48,11 +49,11 @@ import DragHint from "@/src/layout/drag-hint.layout";
 import { useProducts, useProductActions } from "@/src/hooks/products.hook";
 import { useProductModal } from "@/src/hooks/product-modal.hook";
 import { Product } from "@/src/types/types";
-import { formatDate } from "@/src/utils/formatDate";
+import { formatDate } from "@/src/utils/format-date.utils";
 import { amountRangeOptions, dateRangeOptions, sortOptions } from "@/constants";
-import { formatAmount } from "@/src/utils/moneyFormatter";
+import { formatAmount } from "@/src/utils/currency-formatter.utils";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 9;
 
 export default function ProductsPage() {
   const [searchInput, setSearchInput] = useState("");
@@ -91,7 +92,6 @@ export default function ProductsPage() {
 
   const queryParams = useMemo(() => {
     const params: any = {
-      page: currentPage,
       limit: ITEMS_PER_PAGE,
       search: debouncedSearch,
       sortBy: sortBy.replace("_desc", "").replace("_asc", ""),
@@ -107,9 +107,19 @@ export default function ProductsPage() {
     }
 
     return params;
-  }, [debouncedSearch, sortBy, amountFilters, dateFilters, currentPage]);
+  }, [debouncedSearch, sortBy, amountFilters, dateFilters]);
 
-  const { products, loading, error, pagination, fetchProducts, refresh } = useProducts(queryParams);
+  const { 
+    products, 
+    loading, 
+    error, 
+    pagination, 
+    fetchProducts, 
+    refresh, 
+    loadMore, 
+    showPrevious,
+    canShowPrevious 
+  } = useProducts(queryParams);
 
   useEffect(() => {
     setLocalProducts(products);
@@ -123,6 +133,7 @@ export default function ProductsPage() {
     }, 100);
   }, []);
 
+  // Reset when filters change (but not during typing)
   useEffect(() => {
     if (currentPage !== 1 && !isTypingRef.current) {
       setCurrentPage(1);
@@ -130,8 +141,14 @@ export default function ProductsPage() {
   }, [debouncedSearch, sortBy, amountFilters, dateFilters]);
 
   const handleLoadMore = () => {
-    if (pagination?.hasNextPage) {
-      setCurrentPage((prev) => prev + 1);
+    if (pagination?.hasNextPage && loadMore) {
+      loadMore();
+    }
+  };
+
+  const handleShowPrevious = () => {
+    if (canShowPrevious && showPrevious) {
+      showPrevious();
     }
   };
 
@@ -274,17 +291,17 @@ export default function ProductsPage() {
     }));
   };
 
+  // Fixed drag condition - should work regardless of pagination state
   const isDragEnabled = useMemo(() => {
     return (
       !debouncedSearch &&
       amountFilters.length === 0 &&
       dateFilters.length === 0 &&
       (sortBy === "position_asc" || sortBy === "createdAt_desc") &&
-      currentPage === 1 &&
       !editingProductId &&
       !deletingProductId
     );
-  }, [debouncedSearch, amountFilters, dateFilters, sortBy, currentPage, editingProductId, deletingProductId]);
+  }, [debouncedSearch, amountFilters, dateFilters, sortBy, editingProductId, deletingProductId]);
 
   const renderProductCard = (product: Product, isDragOverlay = false) => {
     const isEditing = editingProductId === product._id;
@@ -432,12 +449,6 @@ export default function ProductsPage() {
                   Save
                 </Button>
               </Card.Footer>
-
-              <Card.EditHint>
-                <Typography.Caption>
-                  Press Ctrl+Enter to save, Escape to cancel
-                </Typography.Caption>
-              </Card.EditHint>
             </>
           )}
         </Card>
@@ -571,6 +582,20 @@ export default function ProductsPage() {
             </DndContext>
 
             <Container.ProductActions>
+              {canShowPrevious && (
+                <Container.ProductLoadMore>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    fullWidth
+                    onClick={handleShowPrevious}
+                    icon={<ChevronLeft />}
+                  >
+                    Show Previous Items
+                  </Button>
+                </Container.ProductLoadMore>
+              )}
+
               {pagination?.hasNextPage && (
                 <Container.ProductLoadMore>
                   <Button

@@ -30,7 +30,7 @@ export default function SearchInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="pl-9 pr-9 h-9"
+          className="pl-9 pr-9 h-9 text-stone-700"
         />
         {value && (
           <button

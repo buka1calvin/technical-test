@@ -114,9 +114,9 @@ export default function ProductCreationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
+          <DialogTitle className="flex text-display items-center gap-2 text-xl font-semibold">
             <div className="p-2 bg-orange-100 rounded-lg">
               <Package className="h-5 w-5 text-orange-600" />
             </div>
@@ -130,7 +130,7 @@ export default function ProductCreationModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">
+              <label className="text-sm text-body font-medium mb-1.5 block">
                 Product Name *
               </label>
               <Input
@@ -143,7 +143,7 @@ export default function ProductCreationModal({
             </div>
 
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">
+              <label className="text-sm font-medium text-body  mb-1.5 block">
                 Amount *
               </label>
               <Input
@@ -157,7 +157,7 @@ export default function ProductCreationModal({
             </div>
 
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">
+              <label className="text-sm font-medium text-body  mb-1.5 block">
                 Comment
                 <span className="text-xs text-muted-foreground ml-1">(optional)</span>
               </label>

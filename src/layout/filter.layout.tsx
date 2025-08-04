@@ -78,7 +78,7 @@ export default function FilterDropdown({
                   <div
                     key={option.value}
                     onClick={() => handleToggle(option.value)}
-                    className="flex items-center gap-3 p-2 rounded hover:bg-accent cursor-pointer"
+                    className="flex text-body items-center gap-3 p-2 rounded hover:bg-accent cursor-pointer"
                   >
                     <div className={cn(
                       'w-4 h-4 border-2 rounded flex items-center justify-center',
@@ -98,7 +98,7 @@ export default function FilterDropdown({
                 <div className="border-t border-border mt-2 pt-2">
                   <button
                     onClick={handleClear}
-                    className="w-full text-sm text-muted-foreground hover:text-foreground p-2 rounded hover:bg-accent transition-colors"
+                    className="w-full text-sm text-muted-foreground hover:text-body p-2 rounded hover:bg-accent transition-colors"
                   >
                     Clear filters
                   </button>

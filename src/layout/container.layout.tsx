@@ -75,7 +75,7 @@ Container.Split = function SplitContainer({
       className
     )}>
       <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground">
-        <div className="flex items-center justify-center p-12">
+        <div className="flex items-center justify-center p-12 w-full">
           {left}
         </div>
       </div>

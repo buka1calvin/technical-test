@@ -106,15 +106,16 @@ export default function Card({
     }
   };
 
+  const dragEventHandlers = isDraggable && !isEditing && !isDeleting ? {
+    ...attributes,
+    ...listeners,
+  } : {};
+
   const cardContent = variant === "product" ? (
     <div className={cn("relative z-20", paddingClasses[padding])}>
       {isDraggable && !isEditing && !isDeleting && (
-        <div
-          className="absolute top-3 left-3 opacity-0 group-hover:opacity-60 transition-opacity duration-200 z-30"
-          {...attributes}
-          {...listeners}
-        >
-          <div className="p-1 rounded bg-white/80 shadow-sm border border-orange-100 hover:bg-orange-50 hover:border-orange-200 transition-colors">
+        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-60 transition-opacity duration-200 z-30 pointer-events-none">
+          <div className="p-1 rounded bg-white/80 shadow-sm border border-orange-100">
             <GripVertical className="w-4 h-4 text-orange-400" />
           </div>
         </div>
@@ -124,12 +125,8 @@ export default function Card({
   ) : (
     <>
       {isDraggable && !isEditing && !isDeleting && (
-        <div
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-60 transition-opacity duration-200 z-30"
-          {...attributes}
-          {...listeners}
-        >
-          <div className="p-1 rounded bg-white/80 shadow-sm border border-orange-100 hover:bg-orange-50 hover:border-orange-200 transition-colors">
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-60 transition-opacity duration-200 z-30 pointer-events-none">
+          <div className="p-1 rounded bg-white/80 shadow-sm border border-orange-100">
             <GripVertical className="w-4 h-4 text-orange-400" />
           </div>
         </div>
@@ -148,6 +145,7 @@ export default function Card({
         onKeyDown={handleKeyDown}
         tabIndex={clickable || onClick ? 0 : undefined}
         role={clickable || onClick ? "button" : undefined}
+        {...dragEventHandlers}
         {...props}
       >
         {cardContent}

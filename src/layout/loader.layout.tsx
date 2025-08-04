@@ -21,7 +21,7 @@ export default function Loading({
     lg: { spinner: 32, dots: 16, pulse: 12 }
   };
 
-  const primaryColor = 'hsl(295 26% 51%)'; 
+  const primaryColor = 'oklch(0.65 0.15 45)'; 
 
   const renderLoader = () => {
     const loaderSize = sizeMap[size][variant];

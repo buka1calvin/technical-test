@@ -24,7 +24,7 @@ export default function Textarea({
 }: TextareaProps) {
   const textareaClasses = cn(
     'w-full px-3 py-2 text-base rounded-md border resize-none',
-    'bg-input border-border text-foreground',
+    'bg-input border-border text-body',
     'placeholder:text-muted-foreground',
     'focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent',
     'disabled:opacity-50 disabled:cursor-not-allowed',

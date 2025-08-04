@@ -60,7 +60,7 @@ export function SortDropdown({
                       setIsOpen(false);
                     }}
                     className={cn(
-                      'flex items-center gap-2 p-2 rounded cursor-pointer text-sm',
+                      'flex items-center text-muted-foreground gap-2 p-2 rounded cursor-pointer text-sm',
                       'hover:bg-accent',
                       isSelected && 'bg-accent text-accent-foreground'
                     )}

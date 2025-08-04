@@ -5,6 +5,7 @@ import Container from "@/src/layout/container.layout";
 import Input from "@/src/layout/input.layout";
 import MarketingSection from "@/src/layout/section-marketing.layout";
 import Typography from "@/src/layout/typography.layout";
+import { validateEmail } from "@/src/utils/email-validation.utils";
 import { useRouter } from "next/router";
 import { useState } from "react";
 
@@ -16,20 +17,17 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     if (!email) {
       setError("Email is Required!");
+      return;
     }
     if (!validateEmail(email)) {
       setError("Email must be a Valid Email!!");
+      return;
     }
     try {
       setIsLoading(true);
@@ -62,7 +60,9 @@ export default function LoginPage() {
                 disabled={isLoading}
               />
 
-              <Typography.Body>We'll create an account for you if this is your first time.</Typography.Body>
+              <Typography.BodySecondary>
+                We'll create an account for you if this is your first time.
+              </Typography.BodySecondary>
             </Card.Content>
 
             <Card.Footer>

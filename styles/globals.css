@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (never);
 
 :root {
   --background: #ffffff;
@@ -17,19 +17,19 @@
 
   --secondary: oklch(0.95 0.03 45);
   --secondary-foreground: oklch(0.35 0.12 45);
-  
+
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
 
-  --accent: oklch(0.88 0.08 45);         
+  --accent: oklch(0.88 0.08 45);
   --accent-foreground: oklch(0.35 0.12 45);
 
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: oklch(0.90 0.02 45);
-  --input: oklch(0.98 0.01 45); 
-  --ring: oklch(0.65 0.15 45); 
-  
+  --border: oklch(0.9 0.02 45);
+  --input: oklch(0.98 0.01 45);
+  --ring: oklch(0.65 0.15 45);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -86,13 +86,24 @@
   --color-orange-50: oklch(0.98 0.01 45);
   --color-orange-100: oklch(0.95 0.03 45);
   --color-orange-200: oklch(0.88 0.08 45);
-  --color-orange-300: oklch(0.80 0.12 45);
+  --color-orange-300: oklch(0.8 0.12 45);
   --color-orange-400: oklch(0.72 0.14 45);
   --color-orange-500: oklch(0.65 0.15 45);
   --color-orange-600: oklch(0.58 0.14 45);
-  --color-orange-700: oklch(0.50 0.12 45);
-  --color-orange-800: oklch(0.42 0.10 45);
+  --color-orange-700: oklch(0.5 0.12 45);
+  --color-orange-800: oklch(0.42 0.1 45);
   --color-orange-900: oklch(0.35 0.08 45);
+  --color-stone-50: #fafaf9;
+  --color-stone-100: #f5f5f4;
+  --color-stone-200: #e7e5e4;
+  --color-stone-300: #d6d3d1;
+  --color-stone-400: #a8a29e;
+  --color-stone-500: #78716c;
+  --color-stone-600: #57534e;
+  --color-stone-700: #44403c;
+  --color-stone-800: #292524;
+  --color-stone-900: #1c1917;
+  --color-stone-950: #0c0a09;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -105,11 +116,15 @@
 body {
   background: linear-gradient(135deg, #fffaf7 0%, #fff4ed 100%);
   color: var(--foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 .dark {
-  --foreground: oklch(0.205 0 0);
+  --foreground: oklch(0.145 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
@@ -118,21 +133,21 @@ body {
   --primary: oklch(0.75 0.12 45);
   --primary-foreground: oklch(0.145 0 0);
 
-  --secondary: oklch(0.30 0.08 45);
+  --secondary: oklch(0.3 0.08 45);
   --secondary-foreground: oklch(0.985 0 0);
-  
+
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
 
-  --accent: oklch(0.42 0.10 45);
-  --accent-foreground: oklch(0.985 0 0); 
-  
+  --accent: oklch(0.42 0.1 45);
+  --accent-foreground: oklch(0.985 0 0);
+
   --destructive: oklch(0.704 0.191 22.216);
 
-  --border: oklch(0.30 0.08 45 / 30%);
-  --input: oklch(0.30 0.08 45 / 15%);
+  --border: oklch(0.3 0.08 45 / 30%);
+  --input: oklch(30.071% 0.07961 45.611 / 0.897);
   --ring: oklch(0.72 0.14 45);
-  
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -163,53 +178,53 @@ body {
     @apply shadow-md hover:shadow-lg focus:ring-2 focus:ring-ring;
     @apply transition-all duration-200;
   }
-  
+
   .btn-secondary {
     @apply bg-secondary text-secondary-foreground hover:bg-orange-200;
     @apply border border-orange-300 focus:ring-2 focus:ring-ring;
     @apply transition-all duration-200;
   }
-  
+
   .btn-danger {
     @apply bg-destructive text-primary-foreground hover:opacity-90;
     @apply shadow-md hover:shadow-lg focus:ring-2 focus:ring-destructive;
     @apply transition-all duration-200;
   }
-  
+
   .btn-ghost {
     @apply hover:bg-accent text-accent-foreground hover:text-accent-foreground;
     @apply focus:ring-2 focus:ring-ring transition-all duration-200;
   }
-  
+
   .btn-outline {
     @apply border-2 border-primary text-primary hover:bg-accent;
     @apply focus:ring-2 focus:ring-ring transition-all duration-200;
   }
 
   .text-display {
-    @apply text-3xl font-bold tracking-tight text-foreground;
+    @apply text-3xl font-bold tracking-tight text-stone-900;
   }
-  
+
   .text-heading {
-    @apply text-xl font-semibold text-foreground;
+    @apply text-xl font-semibold text-stone-900;
   }
-  
+
   .text-subheading {
-    @apply text-lg font-medium text-foreground;
+    @apply text-lg font-medium text-stone-700;
   }
-  
+
   .text-body {
-    @apply text-base text-foreground;
+    @apply text-base text-stone-600;
   }
-  
+
   .text-body-secondary {
     @apply text-sm text-muted-foreground;
   }
-  
+
   .text-caption {
     @apply text-xs text-muted-foreground;
   }
-  
+
   .text-label {
     @apply text-sm font-medium text-foreground;
   }
@@ -221,22 +236,22 @@ body {
     @apply hover:border-orange-200;
     @apply relative overflow-hidden;
   }
-  
+
   .product-card::before {
-    content: '';
+    content: "";
     @apply absolute inset-0 bg-gradient-to-br from-orange-50/60 to-transparent;
     @apply opacity-0 hover:opacity-100 transition-opacity duration-300;
   }
-  
+
   .product-amount {
     @apply text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-600;
     @apply bg-clip-text text-transparent;
   }
-  
+
   .product-meta {
     @apply flex items-center gap-2 text-muted-foreground;
   }
-  
+
   .product-meta-icon {
     @apply w-4 h-4 text-orange-400;
   }
@@ -247,15 +262,15 @@ body {
     @apply bg-gradient-to-br from-orange-50/60 to-orange-100/40;
     @apply border-2 border-dashed border-orange-200;
   }
-  
+
   .empty-state-icon {
     @apply w-16 h-16 text-orange-300 mb-4;
   }
-  
+
   .empty-state-title {
     @apply text-xl font-semibold text-foreground mb-2;
   }
-  
+
   .empty-state-description {
     @apply text-muted-foreground mb-6 max-w-md;
   }
