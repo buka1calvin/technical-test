@@ -21,6 +21,32 @@ A simple fullstack Next.js app (frontend + backend) to manage a personal product
 
 ---
 
+## Tech Stack
+
+- **Frontend Framework** : Next.js 15 (Pages Router)
+- **Styling** : Tailwind CSS + shadcn/ui components
+- **Database** : MongoDB with Mongoose ODM
+- **Language** : TypeScript
+- **Authentication** : JWT (JSON Web Tokens)
+- **Drag & Drop** : Drag & Drop
+- **State Management** : React Context API + Custom Hooks
+- **API** : Next.js API Routes
+
+
+## Environment variables
+
+```bash
+# Database Configuration
+MONGODB_URI=mongodb+srv://your-username:your-password@cluster.mongodb.net/product-list-app
+
+# OR for Local MongoDB:
+MONGODB_URI=mongodb://localhost:your db port /product-list-app
+
+# JWT Authentication
+JWT_SECRET=your-super-secure-jwt-secret-key-here
+
+```
+
 ## Usage Flow
 
 ### user login
